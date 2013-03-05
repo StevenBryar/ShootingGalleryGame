@@ -94,6 +94,7 @@
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="ShootingGalleryGame.cpp" />
     <ClCompile Include="spriteManager.cpp" />
+    <ClCompile Include="Target.cpp" />
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="TextManager.cpp" />
     <ClCompile Include="uiButton.cpp" />
@@ -117,7 +118,9 @@
     <ClInclude Include="MyMath.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="ShootingGalleryGame.h" />
+    <ClInclude Include="ShootingGameConstants.h" />
     <ClInclude Include="spriteManager.h" />
+    <ClInclude Include="Target.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextManager.h" />
     <ClInclude Include="uiButton.h" />

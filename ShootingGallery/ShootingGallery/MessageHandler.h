@@ -43,6 +43,7 @@ public:
 	void sendMessage(Message* msg) const;
 	void deleteMessage(const std::string& name);
 	void deleteMessage(Message* message);
+	void deleteAllMessagesTo(MessageListener* listener);
 private:
 	static MessageHandler* m_Instance;
 	std::vector<Message*>* m_Messages;

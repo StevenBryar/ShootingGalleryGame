@@ -39,6 +39,4 @@ extern const int CAMERA_SPEED;
 extern const int FRAMES_PER_SECOND;
 extern const int WINDOW_WIDTH;
 extern const int WINDOW_HEIGHT;
-extern const std::string WINDOW_NAME;
-
 #endif

@@ -51,11 +51,20 @@ void MessageHandler::update(){
 		}
 	}
 	m_MessagesToDelete->clear();
+	bool pass = false;
 	for(int i = 0;i < m_Messages->size();i++){
 		(*m_Messages)[i]->timeToSend -= Util::instance()->getDelta()*100;
-		if((*m_Messages)[i]->timeToSend <= 0){
-			sendMessage((*m_Messages)[i]);
-			deleteMessage((*m_Messages)[i]);
+		for(int j = 0;j < m_MessagesToDelete->size();j++){//we don't want to send any messages that are in m_MessagesToDelete
+			if((*m_Messages)[i] == (*m_MessagesToDelete)[j]){
+				pass = true;
+				break;
+			}
+		}
+		if(!pass){
+			if((*m_Messages)[i]->timeToSend <= 0){
+				sendMessage((*m_Messages)[i]);
+				deleteMessage((*m_Messages)[i]);
+			}
 		}
 	}
 }
@@ -71,6 +80,13 @@ void MessageHandler::deleteMessage(Message* message){
 	for(int i = 0;i < m_Messages->size();i++){
 		if((*m_Messages)[i] == message){
 			m_MessagesToDelete->push_back(message);
+		}
+	}
+}
+void MessageHandler::deleteAllMessagesTo(MessageListener* listener){
+	for(int i = 0;i < m_Messages->size();i++){
+		if((*m_Messages)[i]->reciever == listener){
+			deleteMessage((*m_Messages)[i]);
 		}
 	}
 }

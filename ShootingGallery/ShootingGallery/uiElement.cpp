@@ -5,7 +5,10 @@ UiElement::UiElement(const int& posX,const int& posY,Camera* camera) :
 m_ScreenPosX(posX),
 m_ScreenPosY(posY),
 m_Camera(camera),
-GameObject(){}
+GameObject(){
+	setPositionX(m_ScreenPosX);
+	setPositionY(m_ScreenPosY);
+}
 UiElement::~UiElement(){
 
 }

@@ -11,13 +11,14 @@
 #include "GameObject.h"
 #include "2dSprite.h"
 #include "Util.h"
-
+#include "common.h"
+#include "ShootingGalleryGame.h"
 
 void updateMouse(sf::Window* window);
 
 int main(){
 	sf::RenderWindow* window = new sf::RenderWindow
-		(sf::VideoMode(WINDOW_WIDTH,WINDOW_HEIGHT),WINDOW_NAME);
+		(sf::VideoMode(WINDOW_WIDTH,WINDOW_HEIGHT),"ShootinGallery",sf::Style::Titlebar);
 	window->setFramerateLimit(FRAMES_PER_SECOND);
 	sf::Clock theClock;
 	double lastUpdateTime = theClock.getElapsedTime().asSeconds();
@@ -25,6 +26,9 @@ int main(){
 	sf::View* view = new sf::View(sf::FloatRect(0,0,WINDOW_WIDTH,WINDOW_HEIGHT));
 	//Game loop
 	while(window->isOpen()){
+		if(focus){
+			updateMouse(window);
+		}
 		Util::instance()->update();
 		sf::Event event;
 		InputManager::instance()->update();
@@ -33,9 +37,12 @@ int main(){
 			case sf::Event::Closed:
 				SpriteManager::instance()->cleanupInstance();
 				InputManager::instance()->cleanUpInstance();
-				//BlobGame::instance()->cleanupInstance();
+				ShootingGalleryGame::instance()->cleanupInstance();
 				Renderer::instance()->cleanupInstance();
+				Util::instance()->cleanUpInstance();
+				SafePtrRelease(view);
 				window->close();
+				SafePtrRelease(window);
 				return 0;
 			case sf::Event::LostFocus:
 			case sf::Event::GainedFocus:
@@ -79,20 +86,20 @@ int main(){
 					else{
 						SpriteManager::instance()->cleanupInstance();
 						InputManager::instance()->cleanUpInstance();
-						//BlobGame::instance()->cleanupInstance();
+						ShootingGalleryGame::instance()->cleanupInstance();
 						Renderer::instance()->cleanupInstance();
+						Util::instance()->cleanUpInstance();
+						SafePtrRelease(view);
 						window->close();
+						SafePtrRelease(window);
 						return 0;
 					}
 				}
 			}
 		}
-		//BlobGame::instance()->update();
+		ShootingGalleryGame::instance()->update();
 		SpriteManager::instance()->update();
 		Renderer::instance()->render(window,view);
-		if(focus){
-		updateMouse(window);
-		}
 	}
 	return 0;
 }
