@@ -11,6 +11,8 @@
 #include "2dSprite.h"
 #include "spriteManager.h"
 #include "uiButton.h"
+#include "Vector3.h"
+#include <fstream>
 
 ShootingGalleryGame* ShootingGalleryGame::m_Instance = NULL;
 ShootingGalleryGame* ShootingGalleryGame::instance(){
@@ -28,12 +30,13 @@ ShootingGalleryGame::ShootingGalleryGame(){
 	reset();
 }
 ShootingGalleryGame::~ShootingGalleryGame(){
+	MessageHandler::Instance()->cleanUpInstance();
+	TextManager::instance()->cleanupInstance();
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
 		SafePtrRelease(m_GameObjects);
 	}
 	if(m_HighScores){
-		SafeVectorDelete<HighScore>(*m_HighScores);
 		SafePtrRelease(m_HighScores);
 	}
 }
@@ -42,10 +45,11 @@ void ShootingGalleryGame::loadContent(){
 	SpriteManager::instance()->loadTexture("PlayButtonD.png");
 	SpriteManager::instance()->loadTexture("PlayButtonH.png");
 	SpriteManager::instance()->loadTexture("PlayButtonS.png");
+	TextManager::instance()->loadFont("tfa_squaresans.ttf");
 }
 void ShootingGalleryGame::initialize(){
 	m_GameObjects = new std::vector<GameObject*>();
-	m_HighScores = new std::vector<HighScore*>();
+	m_HighScores = new std::vector<HighScore>();
 	m_Score = 0;
 	m_CurrentState = None;
 	m_Background = NULL;
@@ -115,20 +119,25 @@ void ShootingGalleryGame::gamePlay(){
 		//else switch to play again screen.
 }
 void ShootingGalleryGame::mainMenu(){
-	//update m_GameObjects.
 	for(int i = 0;i < m_GameObjects->size();i++){
 		(*m_GameObjects)[i]->update();
 	}
 }
 void ShootingGalleryGame::highScore(){
-	//update objects.
+	for(int i = 0;i < m_GameObjects->size();i++){
+		(*m_GameObjects)[i]->update();
+	}
 }
 
 void ShootingGalleryGame::newHighScore(){
-	//update m_GameObjects.
+	for(int i = 0;i < m_GameObjects->size();i++){
+		(*m_GameObjects)[i]->update();
+	}
 }
 void ShootingGalleryGame::playAgain(){
-	//update m_GameObjects.
+	for(int i = 0;i < m_GameObjects->size();i++){
+		(*m_GameObjects)[i]->update();
+	}
 }
 
 Target* ShootingGalleryGame::spawnTarget(){
@@ -141,18 +150,20 @@ Target* ShootingGalleryGame::spawnTarget(){
 }
 
 void ShootingGalleryGame::beginMainMenu(){
-	//create play button.
-	//create highscore button.
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
 	UiButton* playB = new UiButton(240,350,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
 									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)GamePlay);
 	m_GameObjects->push_back(playB);
+
+	UiButton* highScoreButton = new UiButton(700,350,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)HighScoreScreen);
+	m_GameObjects->push_back(highScoreButton);
 }
 void ShootingGalleryGame::endMainMenu(){
 	SpriteManager::instance()->deleteSprite(m_Background);
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
-		SafePtrRelease(m_GameObjects);
+		m_GameObjects->clear();
 	}
 }
 
@@ -166,58 +177,120 @@ void ShootingGalleryGame::endGame(){
 	SpriteManager::instance()->deleteSprite(m_Background);
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
-		SafePtrRelease(m_GameObjects);
+		m_GameObjects->clear();
 	}
 }
 
 void ShootingGalleryGame::beginHighScore(){
-	//load highscore.
-	//create background image.
-	//create back button.
-	//create text on screen matching high scores.
+	loadHighScores();
+	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
+	UiButton* backButton = new UiButton(100,100,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)MainMenu);
+	m_GameObjects->push_back(backButton);
+	Vector3 c(170,80,100);
+	loadHighScores();
+	for(int i = 0;i < m_HighScores->size();i++){
+		TextManager::instance()->createText(
+			(*m_HighScores)[i].m_Name,"tfa_squaresans.ttf",30,c,255,40,10+(i*50),0,false,0);
+		TextManager::instance()->createText(
+			intToString((*m_HighScores)[i].m_HighScore),"tfa_squaresans.ttf",30,c,255,500,10+(i*50),0,false,0);
+	}
 }
 void ShootingGalleryGame::endHighScore(){
+	TextManager::instance()->deleteAllText();
 	SpriteManager::instance()->deleteSprite(m_Background);
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
-		SafePtrRelease(m_GameObjects);
+		m_GameObjects->clear();
 	}
 }
 void ShootingGalleryGame::beginNewHighScore(){
+	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
+	UiButton* finishedB = new UiButton(400,400,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)HighScoreScreen);
+	m_GameObjects->push_back(finishedB);
+	Vector3 c(170,80,100);
+	TextManager::instance()->createText("YourScore: ","tfa_squaresans.ttf",30,c,255,255,200,false,0,0);
+	TextManager::instance()->createText(intToString(m_Score),"tfa_squaresans.ttf",30,c,255,500,200,false,0,0);
 	//create three UiListMenu objects with there entries set to the letters of the alphabet.
-	//create a Text object to represent the high score.
-	//create finished button.
-	//create background image.
-	//Create new High Score Text as a title.
 }
 void ShootingGalleryGame::endNewHighScore(){
-	//delete all text.
+	TextManager::instance()->deleteAllText();
 		SpriteManager::instance()->deleteSprite(m_Background);
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
-		SafePtrRelease(m_GameObjects);
+		m_GameObjects->clear();
 	}
 }
 void ShootingGalleryGame::beginPlayAgain(){
-	//Create Play Again? Text.
-	//Create play again Button.
-	//Create quit to main Button.
-	//Create background image.
+	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
+	UiButton* playAgainB = new UiButton(300,300,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)GamePlay);
+	m_GameObjects->push_back(playAgainB);
+	UiButton* quitB = new UiButton(600,300,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)MainMenu);
+	m_GameObjects->push_back(quitB);
+
+	Vector3 c(170,80,100);
+	TextManager::instance()->createText("YourScore: ","tfa_squaresans.ttf",30,c,255,255,200,false,0,0);
+	TextManager::instance()->createText(intToString(m_Score),"tfa_squaresans.ttf",30,c,255,500,200,false,0,0);
 }
 void ShootingGalleryGame::endPlayAgain(){
-	//delete all text.
 	SpriteManager::instance()->deleteSprite(m_Background);
+	TextManager::instance()->deleteAllText();
 	if(m_GameObjects){
 		SafeVectorDelete<GameObject>(*m_GameObjects);
-		SafePtrRelease(m_GameObjects);
+		m_GameObjects->clear();
 	}
 }
 
 void ShootingGalleryGame::saveHighScores(){
+	std::string path = "HighScores.hs";
+	std::ifstream file(path);
+	if(file){
+		file.close();
+		if(remove(path.c_str()) != 0){
+			std::cout << "Can't save scores";
+			return;
+		}
+	}
+	std::fstream outFile("HighScores.hs",std::ios::out,std::ios::binary);
+	for(int i = 0;i < m_HighScores->size();i++){
+		outFile.write((*m_HighScores)[i].m_Name.c_str(),HIGHSCORE_NAME_LENGTH);
+		outFile.write((char*)&((*m_HighScores)[i].m_HighScore),sizeof(int));
+	}
+	outFile.close();
 	//take the m_HighScores vector and save them to the "highScores.hs" file.
 }
 void ShootingGalleryGame::loadHighScores(){
-	//load the "highScores.hs" file into m_HighScores.
+	std::fstream file("HighScores.hs",std::ios::in | std::ios::binary);
+	if(!file){
+		if(m_HighScores->size() > 0){
+			saveHighScores();
+			return;
+		}
+		else{
+			for(int i = 0;i < MAX_HIGH_SCORES;i++){
+				HighScore s;
+				s.m_HighScore = 100;
+				s.m_Name = "AAA";
+				m_HighScores->push_back(s);
+			}
+			saveHighScores();
+			return;
+		}
+	}
+	HighScore s;
+	char* buffer;
+	for(int i = 0;i < MAX_HIGH_SCORES;i++){
+		buffer = new char[HIGHSCORE_NAME_LENGTH];
+		file.read(buffer,HIGHSCORE_NAME_LENGTH);
+		s.m_Name = buffer;
+		file.read((char*)&(s.m_HighScore),sizeof(int));
+		delete[] buffer;
+		m_HighScores->push_back(s);
+	}
+	file.close();
 }
 
 void ShootingGalleryGame::mouseInputCalback(const inputEvent& event,const int& x,const int& y){

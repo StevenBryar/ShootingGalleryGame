@@ -67,7 +67,7 @@ protected:
 	void endPlayAgain();
 
 	std::vector<GameObject*>* m_GameObjects;
-	std::vector<HighScore*>* m_HighScores;
+	std::vector<HighScore>* m_HighScores;
 	Sprite2d* m_Background;
 	int m_Score;
 	SGGameStates m_CurrentState;
