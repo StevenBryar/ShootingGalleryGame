@@ -6,11 +6,13 @@
 #include "TextManager.h"
 #include "gameObject.h"
 #include "uiButton.h"
+#include "uiListMenu.h"
 #include "Target.h"
 #include "ShootingGameConstants.h"
 #include "2dSprite.h"
 #include "spriteManager.h"
 #include "uiButton.h"
+#include "Text.h"
 #include "Vector3.h"
 #include <fstream>
 
@@ -64,6 +66,9 @@ void ShootingGalleryGame::reset(){
 	changeState(MainMenu);
 }
 
+bool ShootingGalleryGame::getPaused(){return m_Paused;}
+void ShootingGalleryGame::setPaused(const bool& paused){m_Paused = paused;}
+
 void ShootingGalleryGame::changeState(const SGGameStates& state){
 	if(state != m_CurrentState){
 		switch(m_CurrentState){
@@ -110,13 +115,17 @@ void ShootingGalleryGame::changeState(const SGGameStates& state){
 }
 
 void ShootingGalleryGame::gamePlay(){
-	//update objects.
+	if(!m_Paused){
+		for(int i = 0;i < m_GameObjects->size();i++){
+			(*m_GameObjects)[i]->update();
+		}
 	//if m_SetToSpawn == false
 		//send message to game to spawn targets at random time between 1 - 4 seconds.
 	//decrease time left.
 	//if time left >= 0 check for high score.
 		//if highscore change to newHighScore mode.
 		//else switch to play again screen.
+	}
 }
 void ShootingGalleryGame::mainMenu(){
 	for(int i = 0;i < m_GameObjects->size();i++){
@@ -168,10 +177,18 @@ void ShootingGalleryGame::endMainMenu(){
 }
 
 void ShootingGalleryGame::beginGame(){
-	//create random stationary targets to start.
-	//create quit button.
-	//create background image.
-	//set score to 0.
+	m_Score = 0;
+	for(int i = 0;i < 10;i++){
+		//m_GameObjects->push_back(spawnTarget());
+	}
+	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
+	UiButton* quitB = new UiButton(240,350,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)GamePlay);
+	m_GameObjects->push_back(quitB);
+
+	UiButton* pauseB = new UiButton(700,350,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&pause,NULL);
+	m_GameObjects->push_back(pauseB);
 }
 void ShootingGalleryGame::endGame(){
 	SpriteManager::instance()->deleteSprite(m_Background);
@@ -205,14 +222,30 @@ void ShootingGalleryGame::endHighScore(){
 	}
 }
 void ShootingGalleryGame::beginNewHighScore(){
+	HighScore* score = new HighScore();
+	score->m_HighScore = m_Score;
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
 	UiButton* finishedB = new UiButton(400,400,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
-									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)HighScoreScreen);
+									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&saveHighScore,(void*)score);
 	m_GameObjects->push_back(finishedB);
 	Vector3 c(170,80,100);
 	TextManager::instance()->createText("YourScore: ","tfa_squaresans.ttf",30,c,255,255,200,false,0,0);
 	TextManager::instance()->createText(intToString(m_Score),"tfa_squaresans.ttf",30,c,255,500,200,false,0,0);
-	//create three UiListMenu objects with there entries set to the letters of the alphabet.
+	//create three UiListMenu objects with there entries set to the letters of the alphabet
+	UiButton* scrollUp = new UiButton(100,100,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&scrollUpLetterSelect,NULL);
+	UiButton* scrollDown = new UiButton(500,100,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&scrollDownLetterSelect,NULL);
+
+	UiListMenu* letter1 = new UiListMenu(200,150,NULL,scrollUp,scrollDown,50,50,1,50);
+	letter1->setWidth(150);
+	letter1->setHeight(200);
+	Text* text = NULL;
+	for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
+		Text* text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",120,c,255,0,0,0,false,0);
+		letter1->addEntry(text);
+	}
+	m_GameObjects->push_back(letter1);
 }
 void ShootingGalleryGame::endNewHighScore(){
 	TextManager::instance()->deleteAllText();
@@ -285,7 +318,7 @@ void ShootingGalleryGame::loadHighScores(){
 	for(int i = 0;i < MAX_HIGH_SCORES;i++){
 		buffer = new char[HIGHSCORE_NAME_LENGTH];
 		file.read(buffer,HIGHSCORE_NAME_LENGTH);
-		s.m_Name = buffer;
+		s.m_Name = std::string(buffer,HIGHSCORE_NAME_LENGTH);
 		file.read((char*)&(s.m_HighScore),sizeof(int));
 		delete[] buffer;
 		m_HighScores->push_back(s);
@@ -318,8 +351,21 @@ void ShootingGalleryGame::handleMessage(const Message& msg){
 	}
 }
 
-void pause(void* param){}
+void pause(void* param){ShootingGalleryGame::instance()->setPaused(!ShootingGalleryGame::instance()->getPaused());}
+
 void changeGameState(void* state){
 	MessageHandler::Instance()->createMessage(CHANGE_STATE,ShootingGalleryGame::instance(),
 												ShootingGalleryGame::instance(),state,0);
+}
+void saveHighScore(void* highScore){}
+
+void scrollUpLetterSelect(void* listMenu){
+	UiListMenu* menu = (UiListMenu*)listMenu;
+	menu->scrollUp();
+	menu->setSelectedEntry(menu->getSelecedEntryNumber()-1);
+}
+void scrollDownLetterSelect(void* listMenu){
+	UiListMenu* menu = (UiListMenu*)listMenu;
+	menu->scrollDown();
+	menu->setSelectedEntry(menu->getSelecedEntryNumber()+1);
 }

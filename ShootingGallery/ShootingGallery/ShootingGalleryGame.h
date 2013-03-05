@@ -32,6 +32,8 @@ public:
 
 	void saveHighScores();
 	void loadHighScores();
+	bool getPaused();
+	void setPaused(const bool& paused);
 
 	Target* spawnTarget();
 
@@ -80,4 +82,6 @@ protected:
 void pause(void* param);//pause/unpause.
 void changeGameState(void* state);
 void saveHighScore(void* highScore);
+void scrollUpLetterSelect(void* listMenu);
+void scrollDownLetterSelect(void* listMenu);
 #endif

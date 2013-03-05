@@ -93,6 +93,7 @@
     <ClCompile Include="MessageHandler.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="ShootingGalleryGame.cpp" />
+    <ClCompile Include="ShootingGameConstants.cpp" />
     <ClCompile Include="spriteManager.cpp" />
     <ClCompile Include="Target.cpp" />
     <ClCompile Include="Text.cpp" />
