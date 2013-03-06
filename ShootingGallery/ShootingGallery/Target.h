@@ -18,6 +18,8 @@ enum PointType{
 	Divi = 4
 };
 
+class Text;
+
 class Target : public GameObject , public MessageListener{
 public:
 	Target(const unsigned int& type,const PointType& pType,const int& value,Sprite2d* sprite);
@@ -31,11 +33,13 @@ public:
 	PointType getPointType() const;
 	int getValue() const;
 	bool getInvis() const;
+	std::string getType();
 protected:
 	unsigned int m_TargetType;
 	PointType m_Type;
 	int m_Value;
 	bool m_Invis;
+	Text* m_Text;
 
 	void handleMessage(const Message& msg);
 };

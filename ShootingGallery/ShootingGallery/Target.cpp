@@ -5,6 +5,8 @@
 #include "MessageHandler.h"
 #include "2dSprite.h"
 #include "Vector3.h"
+#include "Text.h"
+#include "TextManager.h"
 
 Target::Target(const unsigned int& type,
 	const PointType& pType,const int& value,Sprite2d* sprite) :
@@ -17,9 +19,36 @@ m_Invis(false){
 	if(ContainsFlags(m_TargetType,Blink)){
 		MessageHandler::Instance()->createMessage(SWITCH_VISIBILTY,this,this,NULL,INVIS_TIME);
 	}
+	std::string text;
+	Vector3 color;
+	switch(m_Type){
+	case Plus:
+		text += "+";
+		color = GREEN;
+		break;
+	case Minus:
+		text += "-";
+		color = RED;
+		break;
+	case Multi:
+		text += "*";
+		color = GREEN;
+		break;
+	case Divi:
+		text += "/";
+		color = RED;
+		break;
+	default:
+		break;
+	}
+	text += intToString(m_Value);
+	
+	m_Text = TextManager::instance()->createText(text,"tfa_squaresans.ttf",30,color,
+		255,m_PositionX,m_PositionY,0,false,0);
 }
 Target::~Target(){
 	MessageHandler::Instance()->deleteAllMessagesTo(this);
+	TextManager::instance()->deleteText(m_Text);
 }
 
 void Target::update(){
@@ -55,12 +84,14 @@ void Target::update(){
 			m_PositionY += (Util::instance()->getDelta()*NORMAL_SPEED);
 		}
 	}
+	m_Text->setPosition(m_PositionX,m_PositionY);
 }
 
 unsigned int Target::getTargetType() const{return m_TargetType;}
 PointType Target::getPointType() const{return m_Type;}
 int Target::getValue() const{return m_Value;}
 bool Target::getInvis() const{return m_Invis;}
+std::string Target::getType(){return "Target";}
 
 bool Target::hit(const int& x,const int& y) const{
 	if(x > m_PositionX && x < (m_PositionX+m_Width) &&

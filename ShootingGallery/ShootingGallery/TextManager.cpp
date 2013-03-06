@@ -33,6 +33,13 @@ void TextManager::cleanupInstance(){
 	}
 	m_Instance = NULL;
 }
+
+void TextManager::update(){
+	for(int i = 0; i < m_Texts->size();i++){
+		(*m_Texts)[i]->update();
+	}
+}
+
 Text* TextManager::createText(const std::string& text,const std::string& fontName,const int& fontSize,
 				 const Vector3& color,const int& alpha,const int& x,const int& y,
 				 const unsigned int& atts,const bool& deleteAfterTime,const float& timeTillDelete){
@@ -72,16 +79,11 @@ void TextManager::loadFont(const std::string& file){
 	}
 }
 std::vector<Text*>* TextManager::getTexts() const{return m_Texts;}
-void TextManager::update(){
-	for(int i = 0;i < m_Texts->size();i++){
-		(*m_Texts)[i]->update();
-	}
-}
 
 void TextManager::handleMessage(const Message& msg){
 	switch(msg.type){
 	case 10:
-
+		deleteText((Text*)msg.extraInfo);
 		break;
 	}
 }

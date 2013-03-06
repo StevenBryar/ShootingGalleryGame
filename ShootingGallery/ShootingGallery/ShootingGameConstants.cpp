@@ -10,3 +10,5 @@ const std::string LETTERS_NUMBERS[] = {	"A","B","C","D","E","F",
 										"r","s","t","u","v","w",
 										"x","z","1","2","3","4",
 										"5","6","7","8","9","0"};//60
+const Vector3 RED = Vector3(255,20,20);
+const Vector3 GREEN = Vector3(20,255,20);

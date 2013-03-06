@@ -23,6 +23,7 @@ struct HighScore{
 class GameObject;
 class Target;
 class Sprite2d;
+class UiListMenu;
 class ShootingGalleryGame : public Game , public InputListener , public MessageListener{
 public:
 	static ShootingGalleryGame* instance();
@@ -32,8 +33,12 @@ public:
 
 	void saveHighScores();
 	void loadHighScores();
-	bool getPaused();
-	void setPaused(const bool& paused);
+	UiListMenu* getLetter1() const;
+	UiListMenu* getLetter2() const;
+	UiListMenu* getLetter3() const;
+
+	std::vector<HighScore>* getHighScores() const;
+	void setHighScores(std::vector<HighScore>* scores);
 
 	Target* spawnTarget();
 
@@ -73,14 +78,16 @@ protected:
 	Sprite2d* m_Background;
 	int m_Score;
 	SGGameStates m_CurrentState;
-	bool m_Paused;
 	bool m_SetToSpawn;
+	float m_TimeRemaining;
+	UiListMenu* m_Letter1;
+	UiListMenu* m_Letter2;
+	UiListMenu* m_Letter3;
 
 	void mouseInputCalback(const inputEvent& event,const int& x,const int& y);
 	void handleMessage(const Message& msg);
 };
 
-void pause(void* param);//pause/unpause.
 void changeGameState(void* state);
 void saveHighScore(void* highScore);
 void scrollUpLetterSelect(void* listMenu);

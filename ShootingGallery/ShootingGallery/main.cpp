@@ -13,6 +13,7 @@
 #include "Util.h"
 #include "common.h"
 #include "ShootingGalleryGame.h"
+#include "TextManager.h"
 
 void updateMouse(sf::Window* window);
 
@@ -98,6 +99,7 @@ int main(){
 			}
 		}
 		ShootingGalleryGame::instance()->update();
+		TextManager::instance()->update();
 		SpriteManager::instance()->update();
 		Renderer::instance()->render(window,view);
 	}
