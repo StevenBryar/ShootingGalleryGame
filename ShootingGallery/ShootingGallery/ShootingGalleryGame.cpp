@@ -15,6 +15,8 @@
 #include "Text.h"
 #include "Vector3.h"
 #include <fstream>
+#include <stdlib.h>
+#include <time.h>
 
 ShootingGalleryGame* ShootingGalleryGame::m_Instance = NULL;
 ShootingGalleryGame* ShootingGalleryGame::instance(){
@@ -55,6 +57,7 @@ void ShootingGalleryGame::initialize(){
 	m_Score = 0;
 	m_CurrentState = None;
 	m_Background = NULL;
+	srand(time(0));
 }
 
 void ShootingGalleryGame::update(){
@@ -151,10 +154,43 @@ void ShootingGalleryGame::playAgain(){
 
 Target* ShootingGalleryGame::spawnTarget(){
 	Target* target = NULL;
-	//randomly choose between several different target setups.
-	//randomly choose what the point type is(+-*/)chances(+:6,-:3,*:2,/:1)
-	//randomly choose location on the play area.
+	m_SetToSpawn = false;
+	unsigned int targetType = 0;
+	PointType pT = Plus;
+	int setups[] = {1,2,4,8,16,32};
+	PointType types[] = {Plus,Plus,Plus,Plus,Plus,Plus,Minus,Minus,Minus,Multi,Multi,Divi};
+	int values[] = {20,20,60,20,120,60,20,60,400,120,20,20,60,120,200,400,800};
+	int addSubValues = 17;
+	int divMultiMax = 6;
+	int numOfSetups = 6;
+	int numOfTypeChances = 12;
+	int randSetup;
+	int value = 0;
+	for(int i = 0;i < 3;i++){
+		randSetup = (rand() % numOfSetups);
+		targetType |= setups[randSetup];
+		setups[randSetup] = 0;
+	}
+	pT = types[(rand() % numOfTypeChances)];
+	int x = (rand() % WINDOW_WIDTH);
+	int y = (rand() % (WINDOW_HEIGHT-200));
+
+	//Vector3 blue(10,10,255);
+	//Vector3 red(255,10,10);
+	//Vector3 c;
+	if(pT == Plus || pT == Minus){
+		value = values[(rand() % addSubValues)];
+	}
+	else if(pT == Multi || pT == Divi){
+		value = values[(rand() % divMultiMax)];
+	}
 	//randomly chose color of sprite.(+*:B-8,R-2),(-/:B-2,R-8)
+	target = new Target(targetType,pT,value,NULL);
+	target->setPosition(x,y);
+	target->setWidth(128);
+	target->setHeight(128);
+	Sprite2d* sprite = SpriteManager::instance()->createSprite(target,"PlayButtonD.png",0);
+	target->setSprite(sprite);
 	return target;
 }
 
@@ -179,16 +215,17 @@ void ShootingGalleryGame::endMainMenu(){
 void ShootingGalleryGame::beginGame(){
 	m_Score = 0;
 	for(int i = 0;i < 10;i++){
-		//m_GameObjects->push_back(spawnTarget());
+		m_GameObjects->push_back(spawnTarget());
 	}
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
-	UiButton* quitB = new UiButton(240,350,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)GamePlay);
+	UiButton* quitB = new UiButton(240,400,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)MainMenu);
 	m_GameObjects->push_back(quitB);
 
-	UiButton* pauseB = new UiButton(700,350,128,128,"PlayButtonD.png","PlayButtonS.png",
+	UiButton* pauseB = new UiButton(700,400,128,128,"PlayButtonD.png","PlayButtonS.png",
 									FIRE_ON_RELEASED,NULL,&pause,NULL);
 	m_GameObjects->push_back(pauseB);
+	m_Paused = false;
 }
 void ShootingGalleryGame::endGame(){
 	SpriteManager::instance()->deleteSprite(m_Background);

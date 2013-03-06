@@ -19,6 +19,7 @@ enum PointType{
 };
 
 class Target : public GameObject , public MessageListener{
+public:
 	Target(const unsigned int& type,const PointType& pType,const int& value,Sprite2d* sprite);
 	virtual ~Target();
 

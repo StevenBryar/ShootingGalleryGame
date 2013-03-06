@@ -74,6 +74,7 @@ protected:
 	int m_Score;
 	SGGameStates m_CurrentState;
 	bool m_Paused;
+	bool m_SetToSpawn;
 
 	void mouseInputCalback(const inputEvent& event,const int& x,const int& y);
 	void handleMessage(const Message& msg);

@@ -18,7 +18,9 @@ m_Invis(false){
 		MessageHandler::Instance()->createMessage(SWITCH_VISIBILTY,this,this,NULL,INVIS_TIME);
 	}
 }
-Target::~Target(){}
+Target::~Target(){
+	MessageHandler::Instance()->deleteAllMessagesTo(this);
+}
 
 void Target::update(){
 	if(ContainsFlags(m_TargetType,StraightLeft)){
