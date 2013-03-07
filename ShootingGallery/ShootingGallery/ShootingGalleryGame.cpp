@@ -54,6 +54,17 @@ void ShootingGalleryGame::loadContent(){
 	SpriteManager::instance()->loadTexture("PlayButtonD.png");
 	SpriteManager::instance()->loadTexture("PlayButtonH.png");
 	SpriteManager::instance()->loadTexture("PlayButtonS.png");
+	SpriteManager::instance()->loadTexture("UpArrow.png");
+	SpriteManager::instance()->loadTexture("UpArrowS.png");
+	SpriteManager::instance()->loadTexture("DownArrow.png");
+	SpriteManager::instance()->loadTexture("DownArrowS.png");
+	SpriteManager::instance()->loadTexture("Finished.png");
+	SpriteManager::instance()->loadTexture("FinishedS.png");
+	SpriteManager::instance()->loadTexture("HighScoreD.png");
+	SpriteManager::instance()->loadTexture("HighScoreH.png");
+	SpriteManager::instance()->loadTexture("HighScoreS.png");
+	SpriteManager::instance()->loadTexture("quitS.png");
+	SpriteManager::instance()->loadTexture("quitD.png");
 	SpriteManager::instance()->loadTexture("target.png");
 	TextManager::instance()->loadFont("tfa_squaresans.ttf");
 }
@@ -63,9 +74,9 @@ void ShootingGalleryGame::initialize(){
 	m_Score = 0;
 	m_CurrentState = None;
 	m_Background = NULL;
-	UiListMenu* m_Letter1 = NULL;
-	UiListMenu* m_Letter2 = NULL;
-	UiListMenu* m_Letter3 = NULL;
+	m_Letter1 = NULL;
+	m_Letter2 = NULL;
+	m_Letter3 = NULL;
 	InputManager::instance()->registerMouseInput(this,MOUSE_LB_RELEASED);
 	srand(time(0));
 }
@@ -130,26 +141,49 @@ void ShootingGalleryGame::changeState(const SGGameStates& state){
 }
 
 void ShootingGalleryGame::gamePlay(){
-		for(int i = 0;i < m_GameObjects->size();i++){
-			(*m_GameObjects)[i]->update();
-		}
-		if(m_SetToSpawn == false){
-			int spawnTime = (rand() % 700)+300;
-			MessageHandler::Instance()->createMessage(SPAWN_TARGETS,this,this,(void*)6,spawnTime);
-			m_SetToSpawn = true;
-		}
-		m_TimeRemaining -= Util::instance()->getDelta();
-		if(m_TimeRemaining <= 0){
-			loadHighScores();
-			for(int i = 0;i < m_HighScores->size();i++){
-				if((*m_HighScores)[i].m_HighScore <= m_Score){
-					changeState(NewHighScore);
-					return;
-				}
+	std::vector<Target*> targetsToDelete;
+	for(int i = 0;i < m_GameObjects->size();i++){
+		(*m_GameObjects)[i]->update();
+		if((*m_GameObjects)[i]->getType() == "Target"){
+			if(!Util::instance()->rectIntersection(
+				(*m_GameObjects)[i]->getPositionX(),
+				(*m_GameObjects)[i]->getPositionY(),
+				((*m_GameObjects)[i]->getPositionX()+(*m_GameObjects)[i]->getWidth()),
+				((*m_GameObjects)[i]->getPositionY()+(*m_GameObjects)[i]->getHeight()),
+				0,
+				0,
+				WINDOW_WIDTH,
+				WINDOW_HEIGHT)){
+					targetsToDelete.push_back((Target*)(*m_GameObjects)[i]);
 			}
-			changeState(PlayAgain);
-			return;
 		}
+	}
+	if(m_SetToSpawn == false){
+		int spawnTime = (rand() % 200)+200;
+		MessageHandler::Instance()->createMessage(SPAWN_TARGETS,this,this,(void*)6,spawnTime);
+		m_SetToSpawn = true;
+	}
+	m_TimeRemaining -= Util::instance()->getDelta();
+	if(m_TimeRemaining <= 0){
+		loadHighScores();
+		for(int i = 0;i < m_HighScores->size();i++){
+			if((*m_HighScores)[i].m_HighScore <= m_Score){
+				changeState(NewHighScore);
+				return;
+			}
+		}
+		changeState(PlayAgain);
+		return;
+	}
+	for(int i = 0;i < targetsToDelete.size();i++){
+		for(int j = 0;j < m_GameObjects->size();j++){
+			if(targetsToDelete[i] == (*m_GameObjects)[j]){
+				SafePtrRelease(targetsToDelete[i]);
+				m_GameObjects->erase(m_GameObjects->begin()+j);
+				break;
+			}
+		}
+	}
 }
 void ShootingGalleryGame::mainMenu(){
 	for(int i = 0;i < m_GameObjects->size();i++){
@@ -181,7 +215,7 @@ Target* ShootingGalleryGame::spawnTarget(){
 	m_SetToSpawn = false;
 	unsigned int targetType = 0;
 	PointType pT = Plus;
-	int setups[] = {1,2,4,8};
+	int setups[] = {2,4,8,16};
 	PointType types[] = {Plus,Plus,Plus,Plus,Plus,Plus,Minus,Minus,Minus,Multi,Multi,Divi};
 	int values[] = {20,20,60,20,120,60,20,60,400,120,20,20,60,120,200,400,800};
 	int addSubValues = 17;
@@ -194,10 +228,10 @@ Target* ShootingGalleryGame::spawnTarget(){
 		randSetup = (rand() % numOfSetups);
 		if(setups[randSetup] == 0){continue;}
 		targetType |= setups[randSetup];
-		if(setups[randSetup] == 1 || setups[randSetup] == 4){
+		if(setups[randSetup] == 2 || setups[randSetup] == 8){
 			setups[randSetup+1] = 0;
 		}
-		else if(setups[randSetup] == 2 || setups[randSetup] == 8){
+		else if(setups[randSetup] == 4 || setups[randSetup] == 16){
 			setups[randSetup-1] = 0;
 		}
 		setups[randSetup] = 0;
@@ -206,7 +240,7 @@ Target* ShootingGalleryGame::spawnTarget(){
 	if(randSetup < 10){
 		targetType |= Blink;
 	}
-	if(randSetup < 30){
+	else if(randSetup < 30){
 		targetType |= Fast;
 	}
 	pT = types[(rand() % numOfTypeChances)];
@@ -234,7 +268,7 @@ void ShootingGalleryGame::beginMainMenu(){
 									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)GamePlay);
 	m_GameObjects->push_back(playB);
 
-	UiButton* highScoreButton = new UiButton(700,350,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
+	UiButton* highScoreButton = new UiButton(550,350,128,128,"HighScoreD.png","HighScoreS.png","HighScoreH.png",
 									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)HighScoreScreen);
 	m_GameObjects->push_back(highScoreButton);
 }
@@ -265,8 +299,8 @@ void ShootingGalleryGame::endGame(){
 void ShootingGalleryGame::beginHighScore(){
 	loadHighScores();
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
-	UiButton* backButton = new UiButton(100,100,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
-									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)MainMenu);
+	UiButton* backButton = new UiButton(100,100,128,128,"PlayButtonD.png","PlayButtonS.png",
+									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)MainMenu);
 	m_GameObjects->push_back(backButton);
 	Vector3 c(170,80,100);
 	loadHighScores();
@@ -290,52 +324,41 @@ void ShootingGalleryGame::beginNewHighScore(){
 	Text* text = NULL;
 	score->m_HighScore = m_Score;
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
-	UiButton* finishedB = new UiButton(400,400,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
-									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&saveHighScore,(void*)score);
+	UiButton* finishedB = new UiButton(800,200,64,128,"Finished.png","FinishedS.png",
+									FIRE_ON_RELEASED,NULL,&saveHighScore,(void*)score);
 	m_GameObjects->push_back(finishedB);
 	Vector3 c(170,80,100);
-	TextManager::instance()->createText("YourScore: ","tfa_squaresans.ttf",30,c,255,255,200,false,0,0);
-	TextManager::instance()->createText(intToString(m_Score),"tfa_squaresans.ttf",30,c,255,500,200,false,0,0);
+	TextManager::instance()->createText("YourScore: ","tfa_squaresans.ttf",30,c,255,300,400,false,0,0);
+	TextManager::instance()->createText(intToString(m_Score),"tfa_squaresans.ttf",30,c,255,555,400,false,0,0);
 	//create three UiListMenu objects with there entries set to the letters of the alphabet
+	UiListMenu* letter = NULL;
+	UiButton* scrollUp;
+	UiButton* scrollDown;
+	for(int i = 0;i < 3;i++){
+		letter = NULL;
+		scrollUp = new UiButton(200+(i*200),50,128,128,"UpArrow.png","UpArrowS.png",
+										FIRE_ON_RELEASED,NULL,&scrollUpLetterSelect,NULL);
+		scrollDown = new UiButton(200+(i*200),250,128,128,"DownArrow.png","DownArrowS.png",
+										FIRE_ON_RELEASED,NULL,&scrollDownLetterSelect,NULL);
 
-	//letter1
-	UiButton* scrollUp = new UiButton(100,100,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollUpLetterSelect,NULL);
-	UiButton* scrollDown = new UiButton(500,100,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollDownLetterSelect,NULL);
-
-	m_Letter1 = new UiListMenu(200,150,NULL,scrollUp,scrollDown,50,50,1,50);
-	m_Letter1->setWidth(150);
-	m_Letter1->setHeight(200);
-	for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
-		text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",120,c,255,0,0,0,false,0);
-		m_Letter1->addEntry(text);
-	}
-	//letter2
-	scrollUp = new UiButton(400,100,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollUpLetterSelect,NULL);
-	scrollDown = new UiButton(400,250,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollDownLetterSelect,NULL);
-
-	m_Letter2 = new UiListMenu(400,150,NULL,scrollUp,scrollDown,50,50,1,50);
-	m_Letter2->setWidth(150);
-	m_Letter2->setHeight(200);
-	for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
-		text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",120,c,255,0,0,0,false,0);
-		m_Letter2->addEntry(text);
-	}
-	//letter3
-	scrollUp = new UiButton(600,100,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollUpLetterSelect,NULL);
-	scrollDown = new UiButton(600,250,128,128,"PlayButtonD.png","PlayButtonS.png",
-									FIRE_ON_RELEASED,NULL,&scrollDownLetterSelect,NULL);
-
-	m_Letter3 = new UiListMenu(600,150,NULL,scrollUp,scrollDown,50,50,1,50);
-	m_Letter3->setWidth(150);
-	m_Letter3->setHeight(200);
-	for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
-		text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",120,c,255,0,0,0,false,0);
-		m_Letter3->addEntry(text);
+		letter = new UiListMenu(200+(i*200),50,NULL,scrollUp,scrollDown,45,125,1,50);
+		letter->setWidth(150);
+		letter->setHeight(200);
+		for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
+			text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",64,c,255,0,0,0,false,0);
+			letter->addEntry(text);
+		}
+		switch(i){
+		case 0:
+			m_Letter1 = letter;
+			break;
+		case 1:
+			m_Letter2 = letter;
+			break;
+		case 2:
+			m_Letter3 = letter;
+			break;
+		}
 	}
 }
 void ShootingGalleryGame::endNewHighScore(){
@@ -351,11 +374,11 @@ void ShootingGalleryGame::endNewHighScore(){
 }
 void ShootingGalleryGame::beginPlayAgain(){
 	m_Background = SpriteManager::instance()->createSprite(NULL,"MainMenuBack.png",10);
-	UiButton* playAgainB = new UiButton(300,300,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
-									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)GamePlay);
+	UiButton* playAgainB = new UiButton(300,300,64,128,"Finished.png","FinishedS.png",
+									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)GamePlay);
 	m_GameObjects->push_back(playAgainB);
-	UiButton* quitB = new UiButton(600,300,128,128,"PlayButtonD.png","PlayButtonS.png","PlayButtonH.png",
-									FIRE_ON_RELEASED|HIGHLIGHT_ON_HOVER,NULL,&changeGameState,(void*)MainMenu);
+	UiButton* quitB = new UiButton(600,300,128,128,"quitD.png","quitS.png",
+									FIRE_ON_RELEASED,NULL,&changeGameState,(void*)MainMenu);
 	m_GameObjects->push_back(quitB);
 
 	Vector3 c(170,80,100);
@@ -511,10 +534,10 @@ void saveHighScore(void* highScore){
 			scores->pop_back();
 			ShootingGalleryGame::instance()->setHighScores(scores);
 			ShootingGalleryGame::instance()->saveHighScores();
-			changeGameState((void*)HighScoreScreen);
-			return;
+			break;
 		}
 	}
+	changeGameState((void*)HighScoreScreen);
 }
 
 void scrollUpLetterSelect(void* listMenu){
