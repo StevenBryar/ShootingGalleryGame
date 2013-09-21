@@ -344,8 +344,8 @@ void ShootingGalleryGame::beginNewHighScore(){
 		letter = new UiListMenu(200+(i*200),50,NULL,scrollUp,scrollDown,45,125,1,50);
 		letter->setWidth(150);
 		letter->setHeight(200);
-		for(int i = 0;i < LETTERS_NUMBERS_COUNT;i++){
-			text = TextManager::instance()->createText(LETTERS_NUMBERS[i],"tfa_squaresans.ttf",64,c,255,0,0,0,false,0);
+		for(int j = 0;j < LETTERS_NUMBERS_COUNT;j++){
+			text = TextManager::instance()->createText(LETTERS_NUMBERS[j],"tfa_squaresans.ttf",64,c,255,0,0,0,false,0);
 			letter->addEntry(text);
 		}
 		switch(i){
